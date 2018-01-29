@@ -20,7 +20,12 @@
     "mongoose": "*",
     "mongoose-aggregate-paginate": "^1.0.6",
     "mongoose-paginate": "*",
-    "morgan": "*"
+    "morgan": "*",
+    "popper.js": "^1.12.9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leogurning/kxadmin.git"
   },
   "author": "Leonard Gurning",
   "license": "ISC"
