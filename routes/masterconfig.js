@@ -3,7 +3,11 @@ const Msconfig = require('../models/masterconfig');
 const config = require('../config');
 
 const cloudinary = require('cloudinary');
+// Imports the Google Cloud client library
+const Storage = require('@google-cloud/storage');
+
 const uploadpath = "kaxet/images/genres/";
+const gcsuploadpath = "images/genres/";
 
 var ObjId = mongoose.Types.ObjectId;
 var merge = function() {
@@ -27,7 +31,68 @@ cloudinary.config({
     api_secret: config.api_secret
 });
 
+// Creates a client gcp storage
+const storage = new Storage({
+    projectId: config.GCLOUD_PROJECT
+});
+const bucket = storage.bucket(config.CLOUD_BUCKET);
+var getPublicUrl = function(filename) {
+    return `https://storage.googleapis.com/${config.CLOUD_BUCKET}/${gcsuploadpath}${filename}`;
+}
+
 exports.genrephotoupload = function(req, res, next){
+    var stats;
+    const d = new Date();
+    const ts = ("0" + d.getDate()).slice(-2) + ("0"+(d.getMonth()+1)).slice(-2) + 
+                d.getFullYear() + ("0" + d.getHours()).slice(-2) + 
+                ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2);
+
+    if(req.files.genreimage){
+      var file = req.files.genreimage,
+        name = ts;
+        const gcsname = ts+'-'+file.name;
+        const gcsfile = bucket.file(gcsuploadpath+gcsname);
+        const stream = gcsfile.createWriteStream({
+            metadata: {
+              contentType: file.mimetype
+            }
+          });
+
+        stream.on('error', (err) => {
+            file.cloudStorageError = err;
+            console.log("Genre Photo Upload Failed", err);
+            return res.status(401).json({ success: false, 
+                message:'Genre Photo Upload Failed on streaming upload.'
+            });      
+          });
+
+        stream.on('finish', () => {
+            file.cloudStorageObject = gcsname;
+            gcsfile.makePublic().then(() => {
+                file.cloudStoragePublicUrl = getPublicUrl(gcsname);
+                console.log("Genre Photo Uploaded",gcsname);
+                res.status(201).json({
+                  success: true,
+                  message: 'Genre Photo is successfully uploaded.',
+                  filedata : {
+                        genrephotopath: file.cloudStoragePublicUrl,
+                        genrephotoname: file.cloudStorageObject
+                    }
+                });
+                next();
+            })
+            .catch(errerr => {
+                return res.status(401).json({ success: false, 
+                    message:'Genre Photo Upload Failed on making public URL.'
+                });      
+            });
+        });
+        
+        stream.end(file.data); 
+    }    
+}
+
+/* exports.genrephotoupload = function(req, res, next){
     var stats;
     const d = new Date();
     const ts = ("0" + d.getDate()).slice(-2) + ("0"+(d.getMonth()+1)).slice(-2) + 
@@ -61,9 +126,36 @@ exports.genrephotoupload = function(req, res, next){
             filedata : {genrephotopath: "",genrephotoname: ""}
           });
     };
-}
+} */
 
 exports.genrephotodelete = function(req, res, next) {
+    const genrephotoname = req.body.genrephotoname;
+
+    if(genrephotoname){
+        const gcsfile = bucket.file(gcsuploadpath+genrephotoname);
+        gcsfile.delete()
+        .then(() => {
+            console.log("Delete Genre Photo Success",genrephotoname);
+            res.status(201).json({
+                success: true,
+                message: 'Delete Genre Photo successful.'});    
+        })
+        .catch(err => {
+            console.log("Delete Genre Photo Failed",genrephotoname,err);
+            res.status(401).json({ success: false, 
+              message:'Delete Genre Photo Failed.'
+            });
+        });
+    }
+    else {
+        console.log("No File selected !");
+        res.status(402).json({
+            success: false,
+            message: 'No File selected !'});    
+    };
+}
+
+/* exports.genrephotodelete = function(req, res, next) {
     const genrephotoname = req.body.genrephotoname;
 
     if(genrephotoname){
@@ -90,7 +182,7 @@ exports.genrephotodelete = function(req, res, next) {
             success: false,
             message: 'No File selected !'});    
     };
-}
+} */
 
 exports.savemsconfig = function(req, res, next){
     const adminid = req.params.id;

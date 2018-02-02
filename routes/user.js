@@ -34,8 +34,8 @@ exports.signupAdmin = function(req, res, next){
                 bankname: '-',
                 username: username,
                 password: password,
-                usertype: 'admin',
-                status: 'active',
+                usertype: 'ADM',
+                status: 'STSACT',
                 balance: 0
             });
         
@@ -54,7 +54,7 @@ exports.userlabelreport = function(req, res, next){
     const username = req.body.username || req.query.username;
     const name = req.body.name || req.query.name;
     const status = req.body.status || req.query.status;
-    const usertype = 'label';
+    const usertype = 'LBL';
     var totalcount;
 
     let limit = parseInt(req.query.limit);
@@ -167,7 +167,7 @@ exports.login = function(req, res, next){
 		if (!user) {
 			res.status(201).json({ success: false, message: 'Incorrect login credentials.' });
 		}else if (user) {
-            if (user.status == 'active') {
+            if (user.status == 'STSACT') {
                 user.comparePassword(req.body.password, function (err, isMatch) {
                     if (isMatch && !err) {
                         var token = jwt.sign({data:user}, config.secret, {

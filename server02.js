@@ -46,7 +46,7 @@ app.use(morgan('dev'));
 
 // basic routes
 app.get('/', function(req, res) {
-	res.send('Kaxet admin API is running at http://legu.herokuapp:' + port + '/api');
+	res.send('Kaxet admin API is running at api-kxadmin:' + port + '/api');
 });
 
 app.post('/registerAdmin', user.signupAdmin);
@@ -91,4 +91,4 @@ app.get('*', (req, res) => {
 // kick off the server 
 app.listen(port);
 
-console.log('Kaxet admin app is listening at http://legu.herokuapp:' + port);
+console.log('Kaxet admin app is listening at api-kxadmin:' + port);
