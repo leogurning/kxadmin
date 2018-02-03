@@ -83,6 +83,7 @@ apiRoutes.put('/msconfig/:id', masterconfig.updatemsconfigfile); //API to publis
 apiRoutes.post('/mscfgaggreport', masterconfig.msconfigaggregate); //API to display list of song based on search criteria
 apiRoutes.get('/msconfig/:id', masterconfig.getmsconfig); // API get song details of the label
 apiRoutes.get('/msconfigagg/:id', masterconfig.getmsconfigaggregate); // API returns song details of given song id
+apiRoutes.get('/msconfigbygroup/:group', masterconfig.getmsconfigbygroup); // API returns song details of given song id
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));

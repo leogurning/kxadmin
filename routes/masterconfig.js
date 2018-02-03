@@ -81,7 +81,7 @@ exports.genrephotoupload = function(req, res, next){
                 });
                 next();
             })
-            .catch(errerr => {
+            .catch(err => {
                 return res.status(401).json({ success: false, 
                     message:'Genre Photo Upload Failed on making public URL.'
                 });      
@@ -271,6 +271,37 @@ exports.getmsconfig = function(req, res, next){
 		    data: msconfig
 	    });
     });
+}
+
+exports.getmsconfigbygroup = function(req, res, next){
+    const group = req.params.group;
+    const status = 'STSACT';
+    const sortby = 'code';
+    let query = {};
+
+    if (!group) {
+        return res.status(422).send({ error: 'Parameter data is not correct or incompleted.'});
+    }else{
+        // returns artists records based on query
+        query = { group:group, status: status};        
+        var fields = { 
+            _id:0,
+            code:1, 
+            value:1 
+        };
+
+        var psort = { code: 1 };
+
+        Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+            if(err) { 
+                res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+            } 
+            res.status(201).json({
+                success: true, 
+                data: result
+            });
+        });
+    }
 }
 
 exports.updatemsconfigfile = function(req, res, next){
