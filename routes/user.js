@@ -161,7 +161,7 @@ exports.changelabelbalance = function(req, res, next){
 // --------------- SHARED USER FUNCTION !!!!! ------------------------------------------------------------------
 exports.login = function(req, res, next){
     // find the user
-    User.findOne({ username: req.body.username }, function(err, user) {
+    User.findOne({ username: req.body.username, usertype: req.body.usertype }, function(err, user) {
 		if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err}); }
 
 		if (!user) {
