@@ -115,6 +115,7 @@ exports.labelaggreport = function(req, res, next){
     const name = req.body.name || req.query.name;
     const status = req.body.status || req.query.status;
     const usertype = 'LBL';
+    const msconfiggrp = 'STATUS';
     const msconfigsts = 'STSACT';
     var totalcount;
 
@@ -138,9 +139,9 @@ exports.labelaggreport = function(req, res, next){
     // returns all artists records for the label
     //query = { labelid:labelid, artistname:artistname };
     if (!status) {
-        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.status": msconfigsts};
+        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts};
     }else{
-        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.status": msconfigsts, status: status};
+        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts, status: status};
     }
     
     var options = {
