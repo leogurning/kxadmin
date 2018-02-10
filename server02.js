@@ -65,7 +65,7 @@ apiRoutes.get('/', function(req, res) {
 apiRoutes.get('/user/:id', user.getuserDetails); // API returns user details 
 apiRoutes.put('/user/:id', user.updateUser); // API updates user details
 apiRoutes.put('/password/:id', user.updatePassword); // API updates user password
-apiRoutes.post('/userlabelreport', user.userlabelreport); // API display list user label
+apiRoutes.post('/userlabelreport', user.labelaggreport); // API display list user label
 apiRoutes.put('/changelabelstatus/:id', user.changelabelstatus); // API updates status user label
 apiRoutes.put('/changelabelbalance/:id', user.changelabelbalance); // API updates balance user label
 
