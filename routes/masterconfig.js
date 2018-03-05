@@ -233,6 +233,7 @@ exports.savemsconfig = function(req, res, next){
                 filepath: filepath,
                 filename: filename,
                 status: status,
+                createddt: new Date(),
                 lastupdate: new Date(),
                 updateby: adminid,
                 objupdateby: adminid
@@ -483,4 +484,36 @@ exports.getmsconfigaggregate = function(req, res, next){
           });
       }
     });  
+}
+
+exports.getmsconfigvalue = function(req, res, next){
+    const code = req.params.code;
+    const group = req.query.group;
+    const status = 'STSACT';
+    const sortby = 'code';
+    let query = {};
+
+    if (!code || !group) {
+        return res.status(422).send({ error: 'Parameter data is not correct or incompleted.'});
+    }else{
+        // returns artists records based on query
+        query = { code:code, group:group, status: status};        
+        var fields = { 
+            _id:0,
+            code:1, 
+            value:1 
+        };
+
+        var psort = { code: 1 };
+
+        Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+            if(err) { 
+                res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+            } 
+            res.status(201).json({
+                success: true, 
+                data: result
+            });
+        });
+    }
 }

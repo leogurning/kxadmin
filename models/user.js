@@ -10,13 +10,26 @@ const UserSchema = new Schema({
     email: {type:String},
     contactno: {type:String},
     bankaccno: {type:String},
+    bankcode: {type:String},
     bankname: {type:String},  
     username: {type:String},
     password: {type:String},
     usertype: {type:String},  
-    status: {type:String},  
+    status: {type:String}, 
+    balance: {type:Number},
+    balance_idx:{type:Number},
+    verified_no:{type:String},
+    verified_email:{type:String},
     lastlogin: {type:Date},
-    balance: {type:Number}
+    photopath:{type:String},
+    photoname:{type:String},
+    pmtmethod:{type:String},
+    ccno:{type:String},
+    ccholdername:{type:String},
+    ccissuerbank:{type:String},
+    expmth:{type:Number},
+    expyr: {type:Number},
+    ccvno:{type:String}
 });
 
 // Pre-save of user's hash password to database

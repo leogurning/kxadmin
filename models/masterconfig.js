@@ -12,6 +12,7 @@ const MsconfigSchema = new Schema({
     filepath: {type:String},
     filename: {type:String},
     status: {type:String, required: true},
+    createddt:{type:Date},
     lastupdate: {type:Date},
     updateby: {type:String, required: true},
     objupdateby: { type:mongoose.Schema.ObjectId, required: true},

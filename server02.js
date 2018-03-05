@@ -31,7 +31,7 @@ app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Credentials");
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    if ('OPTIONS' === req.method) { res.send(204); } else { next(); }
+    if ('OPTIONS' === req.method) { res.sendStatus(204); } else { next(); }
   });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -50,11 +50,12 @@ app.get('/', function(req, res) {
 });
 
 app.post('/registerAdmin', user.signupAdmin);
+app.get('/msconfigbygroup/:group', masterconfig.getmsconfigbygroup); // API get msconfig details of the msconfigid
+app.get('/msconfigvalue/:code', masterconfig.getmsconfigvalue); // API returns msconfig value of the msconfig code
 
 // express router
 var apiRoutes = express.Router();
 app.use('/api', apiRoutes);
-apiRoutes.post('/login', user.login);
 apiRoutes.use(user.authenticate); // route middleware to authenticate and check token
 
 // authenticated routes
@@ -62,9 +63,6 @@ apiRoutes.get('/', function(req, res) {
 	res.status(201).json({ message: 'Welcome to the authenticated routes!' });
 });
 
-apiRoutes.get('/user/:id', user.getuserDetails); // API returns user details 
-apiRoutes.put('/user/:id', user.updateUser); // API updates user details
-apiRoutes.put('/password/:id', user.updatePassword); // API updates user password
 apiRoutes.post('/userlabelreport', user.labelaggreport); // API display list user label
 apiRoutes.put('/changelabelstatus/:id', user.changelabelstatus); // API updates status user label
 apiRoutes.put('/changelabelbalance/:id', user.changelabelbalance); // API updates balance user label
@@ -75,15 +73,14 @@ apiRoutes.post('/songadm/aggreport', songadm.songaggregateAdm); //API to display
 apiRoutes.get('/songadm/:id', songadm.getsong); // API get song details of the label
 apiRoutes.get('/songaggregate/:id', songadm.getsongaggregate); // API returns song details of given song id
 
-apiRoutes.post('/genrephotoupload', masterconfig.genrephotoupload); //API to cancel publishing song
-apiRoutes.post('/genrephotodelete', masterconfig.genrephotodelete); //API to cancel publishing song
-apiRoutes.post('/msconfig/:id', masterconfig.savemsconfig); //API to cancel publishing song
-apiRoutes.delete('/msconfig/:id', masterconfig.delmsconfig); //API to cancel publishing song
-apiRoutes.put('/msconfig/:id', masterconfig.updatemsconfigfile); //API to publish song
-apiRoutes.post('/mscfgaggreport', masterconfig.msconfigaggregate); //API to display list of song based on search criteria
-apiRoutes.get('/msconfig/:id', masterconfig.getmsconfig); // API get song details of the label
-apiRoutes.get('/msconfigagg/:id', masterconfig.getmsconfigaggregate); // API returns song details of given song id
-apiRoutes.get('/msconfigbygroup/:group', masterconfig.getmsconfigbygroup); // API returns song details of given song id
+apiRoutes.post('/genrephotoupload', masterconfig.genrephotoupload); //API to upload genre photo
+apiRoutes.post('/genrephotodelete', masterconfig.genrephotodelete); //API to delete genre photo
+apiRoutes.post('/msconfig/:id', masterconfig.savemsconfig); //API to save/edit msconfig data
+apiRoutes.delete('/msconfig/:id', masterconfig.delmsconfig); //API to delete msconfig
+apiRoutes.put('/msconfig/:id', masterconfig.updatemsconfigfile); //API to update msconfig file
+apiRoutes.post('/mscfgaggreport', masterconfig.msconfigaggregate); //API to display list of msconfig based on search criteria
+apiRoutes.get('/msconfig/:id', masterconfig.getmsconfig); // API get msconfig details of the msconfigid
+apiRoutes.get('/msconfigagg/:id', masterconfig.getmsconfigaggregate); // API get msconfig details of the msconfigid
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
