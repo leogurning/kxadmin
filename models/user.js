@@ -29,7 +29,8 @@ const UserSchema = new Schema({
     ccissuerbank:{type:String},
     expmth:{type:Number},
     expyr: {type:Number},
-    ccvno:{type:String}
+    ccvno:{type:String},
+    vhash: {type:String}
 });
 
 // Pre-save of user's hash password to database

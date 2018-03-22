@@ -124,6 +124,7 @@ exports.labelaggreport = function(req, res, next){
     const username = req.body.username || req.query.username;
     const name = req.body.name || req.query.name;
     const status = req.body.status || req.query.status;
+    const verified_email = req.body.veremail || req.query.veremail;
     const usertype = 'LBL';
     const msconfiggrp = 'STATUS';
     const msconfigsts = 'STSACT';
@@ -141,23 +142,34 @@ exports.labelaggreport = function(req, res, next){
     if(!page || page < 1) {
 	    page = 1;
     }
-
-    if(!sortby) {
-	    sortby = 'name';
-    }
     
     // returns all artists records for the label
     //query = { labelid:labelid, artistname:artistname };
     if (!status) {
-        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts};
+        if (!verified_email) {
+            query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts};
+        } else {
+            query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts, verified_email:verified_email};
+        }
     }else{
-        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts, status: status};
+        if (!verified_email) {
+            query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts, status: status};
+        } else {
+            query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), usertype:usertype, "msconfigdetails.group": msconfiggrp, "msconfigdetails.status": msconfigsts, status: status, verified_email:verified_email};
+        }        
     }
-    
-    var options = {
-        page: page,
-        limit: limit,
-        sortBy: sortby
+
+    if(!sortby) {
+        var options = {
+            page: page,
+            limit: limit
+        }
+    } else {
+        var options = {
+            page: page,
+            limit: limit,
+            sortBy: sortby
+        }
     }
     var aggregate = User.aggregate();        
     var olookup = {
@@ -177,13 +189,18 @@ exports.labelaggreport = function(req, res, next){
         bankname:1,
         status:1,
         "stsvalue": "$msconfigdetails.value",
+        verified_email:1,
+        verified_no:1,
         lastlogin:1,
         balance:1
       };
     aggregate.lookup(olookup).unwind(ounwind);
     aggregate.match(query);  
     aggregate.project(oproject);      
-
+    if(!sortby) {
+        var osort = { name: 1, username:1};
+        aggregate.sort(osort);
+    }
     User.aggregatePaginate(aggregate, options, function(err, results, pageCount, count) {
         if(err) 
         {
@@ -250,6 +267,33 @@ exports.changelabelbalance = function(req, res, next){
             }
         });
     }
+}
+
+exports.getlabellist = function(req, res, next){
+    const usertype = 'LBL';
+    const status = 'STSACT';
+    const sortby = 'name';
+    let query = {};
+
+    // returns artists records based on query
+    query = { usertype:usertype, status: status};        
+    var fields = { 
+        _id:1, 
+        name:1 
+    };
+
+    var psort = { name: 1 };
+
+    User.find(query, fields).sort(psort).exec(function(err, result) {
+        if(err) { 
+            res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+        } 
+        res.status(201).json({
+            success: true, 
+            data: result
+        });
+    });
+
 }
 
 // --------------- SHARED USER FUNCTION !!!!! ------------------------------------------------------------------

@@ -10,5 +10,5 @@ module.exports = {
     'api_secret': 'jmvqdISXnEp_vTxOCHe8Yl47HPw',
     /* Google Cloud Storage parameters */
     'GCLOUD_PROJECT': 'kaxetd',
-    'CLOUD_BUCKET': 'kaxetd-storage'
+    'CLOUD_BUCKET': 'kaxetd'
  };

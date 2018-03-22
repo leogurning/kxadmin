@@ -114,8 +114,8 @@ exports.getsongaggregate = function(req, res, next){
 
 exports.songaggregateAdm = function(req, res, next){
   const labelid =  req.body.labelid || req.query.labelid; 
-  const artistid = req.body.artistid || req.query.artistid;
-  const albumid = req.body.albumid || req.query.albumid;
+  const artistname = req.body.artistname || req.query.artistname;
+  const albumname = req.body.albumname || req.query.albumname;
   const songname = req.body.songname || req.query.songname;
   const albumyear = req.body.albumyear || req.query.albumyear;
   const songgenre = req.body.songgenre || req.query.songgenre;
@@ -138,9 +138,9 @@ exports.songaggregateAdm = function(req, res, next){
     page = 1;
   }
 
-  if(!sortby) {
+/*   if(!sortby) {
     sortby = 'songname';
-  }
+  } */
 
 
     // returns songs records based on query
@@ -151,11 +151,11 @@ exports.songaggregateAdm = function(req, res, next){
     if (labelid) {
         query = merge(query, {labelid:labelid});
     }
-    if (artistid) {
-        query = merge(query, {artistid:artistid});
+    if (artistname) {
+        query = merge(query, {"artistdetails.artistname": new RegExp(artistname,'i')});
     }
-    if (albumid) {
-        query = merge(query, {albumid:albumid});
+    if (albumname) {
+        query = merge(query, {"albumdetails.albumname": new RegExp(albumname,'i')});
     }
     if (songgenre) {
         query = merge(query, {songgenre:songgenre});
@@ -170,11 +170,18 @@ exports.songaggregateAdm = function(req, res, next){
     if (status) {
         query = merge(query, {status:status});
     }
-
-    var options = {
-        page: page,
-        limit: limit,
-        sortBy: sortby
+    if(!sortby) {
+        var options = {
+            page: page,
+            limit: limit
+        }
+    }
+    else {
+        var options = {
+            page: page,
+            limit: limit,
+            sortBy: sortby
+        }
     }
 
     var aggregate = Song.aggregate();  
@@ -231,10 +238,10 @@ exports.songaggregateAdm = function(req, res, next){
     aggregate.lookup(olookup).unwind(ounwind);
     
     aggregate.project(oproject);      
-    
-    //var osort = { "$sort": { sortby: 1}};
-    //aggregate.sort(osort);
-      
+    if(!sortby) {
+        var osort = { artistid: 1, albumid:1, songname:1};
+        aggregate.sort(osort);
+    }
     Song.aggregatePaginate(aggregate, options, function(err, results, pageCount, count) {
         if(err) 
         {
@@ -279,9 +286,9 @@ exports.publishsong = function(req, res, next){
     }
 }
   
-  exports.cancelpublishsong = function(req, res, next){
-    const songid = req.params.id;
-  
+exports.cancelpublishsong = function(req, res, next){
+const songid = req.params.id;
+
     if (!songid) {
         return res.status(422).json({ success: false, message: 'Parameter data is not correct or incompleted.'});
     } else {
@@ -289,19 +296,19 @@ exports.publishsong = function(req, res, next){
             if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
                 
             if(song){
-              if (song.songbuy > 0) {
+                if (song.songbuy > 0) {
                 res.status(400).json({ success: false, message:'Published Song can not be canceled if the song has been sold. ' });
-              } else {
+                } else {
                 song.songpublish = 'N';
                 song.save(function(err){
-                  if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
-                  res.status(201).json({
-                      success: true,
-                      message: 'Published Song has been canceled successfully'
-                  });
+                    if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
+                    res.status(201).json({
+                        success: true,
+                        message: 'Published Song has been canceled successfully'
+                    });
                 });
-              }  
+                }  
             }
         });
     }
-  }
+}

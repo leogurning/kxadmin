@@ -52,6 +52,7 @@ app.get('/', function(req, res) {
 app.post('/registerAdmin', user.signupAdmin);
 app.get('/msconfigbygroup/:group', masterconfig.getmsconfigbygroup); // API get msconfig details of the msconfigid
 app.get('/msconfigvalue/:code', masterconfig.getmsconfigvalue); // API returns msconfig value of the msconfig code
+app.get('/msconfiggroup', masterconfig.getmsconfiggroup); // API returns msconfig group 
 
 // express router
 var apiRoutes = express.Router();
@@ -66,6 +67,7 @@ apiRoutes.get('/', function(req, res) {
 apiRoutes.post('/userlabelreport', user.labelaggreport); // API display list user label
 apiRoutes.put('/changelabelstatus/:id', user.changelabelstatus); // API updates status user label
 apiRoutes.put('/changelabelbalance/:id', user.changelabelbalance); // API updates balance user label
+apiRoutes.get('/labellist', user.getlabellist); // API returns label list
 
 apiRoutes.put('/cancelpublishsong/:id', songadm.cancelpublishsong); //API to cancel publishing song
 apiRoutes.put('/publishsong/:id', songadm.publishsong); //API to publish song

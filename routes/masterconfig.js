@@ -75,8 +75,8 @@ exports.genrephotoupload = function(req, res, next){
                   success: true,
                   message: 'Genre Photo is successfully uploaded.',
                   filedata : {
-                        genrephotopath: file.cloudStoragePublicUrl,
-                        genrephotoname: file.cloudStorageObject
+                        filepath: file.cloudStoragePublicUrl,
+                        filename: file.cloudStorageObject
                     }
                 });
                 next();
@@ -116,32 +116,32 @@ exports.genrephotoupload = function(req, res, next){
                 res.status(201).json({
                   success: true,
                   message: 'Genre Photo is successfully uploaded.',
-                  filedata : {genrephotopath: result.secure_url,genrephotoname: result.public_id}
+                  filedata : {filepath: result.secure_url,filename: result.public_id}
                 });      
             }
         }).end(file.data);
     } else {
         return res.status(402).json({ success: false, 
             message:'No Genre Photo uploaded.',
-            filedata : {genrephotopath: "",genrephotoname: ""}
+            filedata : {filepath: "",filename: ""}
           });
     };
 } */
 
 exports.genrephotodelete = function(req, res, next) {
-    const genrephotoname = req.body.genrephotoname;
+    const filename = req.body.filename;
 
-    if(genrephotoname){
-        const gcsfile = bucket.file(gcsuploadpath+genrephotoname);
+    if(filename){
+        const gcsfile = bucket.file(gcsuploadpath+filename);
         gcsfile.delete()
         .then(() => {
-            console.log("Delete Genre Photo Success",genrephotoname);
+            console.log("Delete Genre Photo Success",filename);
             res.status(201).json({
                 success: true,
                 message: 'Delete Genre Photo successful.'});    
         })
         .catch(err => {
-            console.log("Delete Genre Photo Failed",genrephotoname,err);
+            console.log("Delete Genre Photo Failed",filename,err);
             res.status(401).json({ success: false, 
               message:'Delete Genre Photo Failed.'
             });
@@ -156,20 +156,20 @@ exports.genrephotodelete = function(req, res, next) {
 }
 
 /* exports.genrephotodelete = function(req, res, next) {
-    const genrephotoname = req.body.genrephotoname;
+    const filename = req.body.filename;
 
-    if(genrephotoname){
-        cloudinary.v2.uploader.destroy(genrephotoname,
+    if(filename){
+        cloudinary.v2.uploader.destroy(filename,
           {invalidate: true, resource_type: 'image'}, 
         function(err, result){
           if(err){
-            console.log("Delete Genre Photo Failed",genrephotoname,err);
+            console.log("Delete Genre Photo Failed",filename,err);
             res.status(401).json({ success: false, 
               message:'Delete Genre Photo Failed.'
             });
           }
           else {
-            console.log("Delete Genre Photo Success",genrephotoname);
+            console.log("Delete Genre Photo Success",filename);
             res.status(201).json({
                 success: true,
                 message: 'Delete Genre Photo successful.'});    
@@ -307,7 +307,7 @@ exports.getmsconfigbygroup = function(req, res, next){
 
 exports.updatemsconfigfile = function(req, res, next){
     const adminid = req.params.id;
-    const msconfigid = req.query.msconfigid;
+    const msconfigid = req.body.msconfigid;
     const filepath = req.body.filepath;
     const filename = req.body.filename;
 
@@ -355,13 +355,15 @@ exports.msconfigaggregate = function(req, res, next){
 	    page = 1;
     }
 
-    if(!sortby) {
+/*     if(!sortby) {
 	    sortby = 'group';
-    }
+    } */
     console.log('process initiated');
     // returns msconfigs records based on query
     query = { code: new RegExp(code,'i'),
-              value: new RegExp(value,'i')
+              value: new RegExp(value,'i'),
+              "msconfigsts.status": 'STSACT',
+              "msconfigsts.group": 'CSTATUS'
             };
     if (group) {
         query = merge(query, {group:group});
@@ -370,11 +372,17 @@ exports.msconfigaggregate = function(req, res, next){
     if (status) {
         query = merge(query, {status:status});
     }
-
-    var options = {
-        page: page,
-        limit: limit,
-        sortBy: sortby
+    if(!sortby) {
+        var options = {
+            page: page,
+            limit: limit
+        }
+    } else {
+        var options = {
+            page: page,
+            limit: limit,
+            sortBy: sortby
+        }
     }
     console.log(query);
     var aggregate = Msconfig.aggregate();
@@ -384,6 +392,12 @@ exports.msconfigaggregate = function(req, res, next){
             foreignField: 'code',
             as: 'msconfiggroup'
         };
+    var olookup1 = {
+            from: 'msconfig',
+            localField: 'status',
+            foreignField: 'code',
+            as: 'msconfigsts'
+        };        
     var oproject = {
         code:1,
         value: 1,
@@ -392,15 +406,18 @@ exports.msconfigaggregate = function(req, res, next){
         "groupname": "$msconfiggroup.value",
         filepath:1,
         filename:1,
-        status:1
+        status:1,
+        "stsvalue": "$msconfigsts.value"
     };
     var ounwind = 'msconfiggroup';
-    //var osort = { "$sort": { sortby: 1}};
+    var ounwind1 = 'msconfigsts';
+    var osort = { group:1, code:1 };
+    aggregate.lookup(olookup1).unwind(ounwind1).match(query);
     aggregate.lookup(olookup).unwind(ounwind);
-    aggregate.match(query);
     aggregate.project(oproject);
-    //aggregate.sort(osort);
-
+    if(!sortby) {
+        aggregate.sort(osort);
+    }
     Msconfig.aggregatePaginate(aggregate, options, function(err, results, pageCount, count) {
         if(err) 
         {
@@ -516,4 +533,31 @@ exports.getmsconfigvalue = function(req, res, next){
             });
         });
     }
+}
+exports.getmsconfiggroup = function(req, res, next){
+
+    const group = 'GROUP';
+    const status = 'STSACT';
+    const sortby = 'code';
+    let query = {};
+
+    // returns artists records based on query
+    query = { group:group, status: status};        
+    var fields = { 
+        _id:0,
+        code:1, 
+        value:1 
+    };
+
+    var psort = { code: 1 };
+
+    Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+        if(err) { 
+            res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+        } 
+        res.status(201).json({
+            success: true, 
+            data: result
+        });
+    });
 }
