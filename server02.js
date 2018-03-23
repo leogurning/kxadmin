@@ -75,8 +75,6 @@ apiRoutes.post('/songadm/aggreport', songadm.songaggregateAdm); //API to display
 apiRoutes.get('/songadm/:id', songadm.getsong); // API get song details of the label
 apiRoutes.get('/songaggregate/:id', songadm.getsongaggregate); // API returns song details of given song id
 
-apiRoutes.post('/genrephotoupload', masterconfig.genrephotoupload); //API to upload genre photo
-apiRoutes.post('/genrephotodelete', masterconfig.genrephotodelete); //API to delete genre photo
 apiRoutes.post('/msconfig/:id', masterconfig.savemsconfig); //API to save/edit msconfig data
 apiRoutes.delete('/msconfig/:id', masterconfig.delmsconfig); //API to delete msconfig
 apiRoutes.put('/msconfig/:id', masterconfig.updatemsconfigfile); //API to update msconfig file
