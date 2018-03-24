@@ -371,12 +371,13 @@ exports.getmsconfigvalue = function(req, res, next){
 exports.getmsconfiggroup = function(req, res, next){
 
     const group = 'GROUP';
+    const root = 'ROOT';
     const status = 'STSACT';
     const sortby = 'code';
     let query = {};
 
     // returns artists records based on query
-    query = { group:group, status: status};        
+    query = { $or:[{group:group},{group:root}], status: status};
     var fields = { 
         _id:0,
         code:1, 
