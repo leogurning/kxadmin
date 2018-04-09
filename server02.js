@@ -15,7 +15,7 @@ const songadm = require('./routes/songAdm.js');
 
 const port = process.env.PORT || config.serverport;
 
-mongoose.connect(config.database, function(err){
+mongoose.connect(config.database, { useMongoClient: true }, function(err){
 	if(err){
 		console.log('Error connecting database, please check if MongoDB is running.');
 	}else{

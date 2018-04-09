@@ -1,6 +1,7 @@
 const mongoose = require( 'mongoose' );
 const Msconfig = require('../models/masterconfig');
 const config = require('../config');
+var rediscli = require('../redisconn');
 
 var ObjId = mongoose.Types.ObjectId;
 var merge = function() {
@@ -53,6 +54,8 @@ exports.savemsconfig = function(req, res, next){
                         success: true,
                         message: 'CONFIG updated successfully'
                     });
+                    //Delete redis respective keys
+                    rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
                 });
             });
 
@@ -81,17 +84,31 @@ exports.savemsconfig = function(req, res, next){
                     message: 'Ms Config saved successfully'
                     });
                 });
-
+                //Delete redis respective keys
+                rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
         }
     }    
 }
 
 exports.delmsconfig = function(req, res, next) {
-	Msconfig.remove({_id: req.params.id}, function(err){
+    const msconfigid = req.params.id;
+    
+    //Edit config
+    Msconfig.findById(msconfigid).exec(function(err, msconfig){ 
         if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
-        res.status(201).json({
-            success: true,
-            message: 'Ms Config removed successfully'
+        
+        if(msconfig) {
+            let code = msconfig.code;
+            let group = msconfig.group;
+            //Delete redis respective keys
+            rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
+        }
+        Msconfig.remove({_id: msconfigid}, function(err){
+            if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
+            res.status(201).json({
+                success: true,
+                message: 'Ms Config removed successfully'
+            });
         });
     });
 }
@@ -117,24 +134,41 @@ exports.getmsconfigbygroup = function(req, res, next){
     if (!group) {
         return res.status(422).send({ error: 'Parameter data is not correct or incompleted.'});
     }else{
-        // returns artists records based on query
-        query = { group:group, status: status};        
-        var fields = { 
-            _id:0,
-            code:1, 
-            value:1 
-        };
+        let keyredis = 'redis-'+group+'-grp';
+        //check on redis
+        rediscli.get(keyredis, function(error,obj) {
+            if (obj) {
+                //console.log('key on redis..');
+                res.status(201).json({
+                    success: true, 
+                    data: JSON.parse(obj)
+                });                
+            }else {
+                //console.log('key not on redis..');
+                // returns config records based on query
+                query = { group:group, status: status};        
+                var fields = { 
+                    _id:0,
+                    code:1, 
+                    value:1 
+                };
 
-        var psort = { code: 1 };
+                var psort = { code: 1 };
 
-        Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
-            if(err) { 
-                res.status(400).json({ success: false, message:'Error processing request '+ err }); 
-            } 
-            res.status(201).json({
-                success: true, 
-                data: result
-            });
+                Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+                    if(err) { 
+                        res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+                    } 
+                    res.status(201).json({
+                        success: true, 
+                        data: result
+                    });
+                    //set in redis
+                    rediscli.set(keyredis,JSON.stringify(result), function(error) {
+                        if (error) { throw error; }
+                    });                    
+                });
+            }
         });
     }
 }
@@ -156,7 +190,11 @@ exports.updatemsconfigfile = function(req, res, next){
             msconfig.filename = filename;
             msconfig.lastupdate = new Date();
             msconfig.updateby = adminid;
-            msconfig.objupdateby = adminid;                
+            msconfig.objupdateby = adminid;
+            let code = msconfig.code;
+            let group = msconfig.group;
+            //Delete redis respective keys
+            rediscli.del('redis-'+code+group);                
 		}
 		msconfig.save(function(err){
 			if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
@@ -164,7 +202,7 @@ exports.updatemsconfigfile = function(req, res, next){
 				success: true,
 				message: 'Ms Config file details updated successfully'
 			});
-		});
+        });
 	});
    }
 }
@@ -347,24 +385,41 @@ exports.getmsconfigvalue = function(req, res, next){
     if (!code || !group) {
         return res.status(422).send({ error: 'Parameter data is not correct or incompleted.'});
     }else{
-        // returns artists records based on query
-        query = { code:code, group:group, status: status};        
-        var fields = { 
-            _id:0,
-            code:1, 
-            value:1 
-        };
+        let keyredis = 'redis-'+code+group;
+        //check on redis
+        rediscli.get(keyredis, function(error,obj) { 
+            if (obj) {
+                //console.log('key on redis...');
+                res.status(201).json({
+                    success: true, 
+                    data: JSON.parse(obj)
+                }); 
+            } else {
+                //console.log('key NOT on redis...');
+                // returns config value records based on query
+                query = { code:code, group:group, status: status};        
+                var fields = { 
+                    _id:0,
+                    code:1, 
+                    value:1 
+                };
 
-        var psort = { code: 1 };
+                var psort = { code: 1 };
 
-        Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
-            if(err) { 
-                res.status(400).json({ success: false, message:'Error processing request '+ err }); 
-            } 
-            res.status(201).json({
-                success: true, 
-                data: result
-            });
+                Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+                    if(err) { 
+                        res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+                    } 
+                    res.status(201).json({
+                        success: true, 
+                        data: result
+                    });
+                    //set in redis
+                    rediscli.set(keyredis,JSON.stringify(result), function(error) {
+                        if (error) { throw error; }
+                    });                    
+                });
+            }
         });
     }
 }
@@ -376,23 +431,39 @@ exports.getmsconfiggroup = function(req, res, next){
     const sortby = 'code';
     let query = {};
 
-    // returns artists records based on query
-    query = { $or:[{group:group},{group:root}], status: status};
-    var fields = { 
-        _id:0,
-        code:1, 
-        value:1 
-    };
+    let keyredis = 'redis-'+group+root;
+    rediscli.get(keyredis, function(error,obj) { 
+        if (obj) {
+            //console.log('key on redis...');
+            res.status(201).json({
+                success: true, 
+                data: JSON.parse(obj)
+            });         
+        } else {
+            //console.log('key NOT on redis...');
+            // returns config group records based on query
+            query = { $or:[{group:group},{group:root}], status: status};
+            var fields = { 
+                _id:0,
+                code:1, 
+                value:1 
+            };
 
-    var psort = { code: 1 };
+            var psort = { code: 1 };
 
-    Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
-        if(err) { 
-            res.status(400).json({ success: false, message:'Error processing request '+ err }); 
-        } 
-        res.status(201).json({
-            success: true, 
-            data: result
-        });
+            Msconfig.find(query, fields).sort(psort).exec(function(err, result) {
+                if(err) { 
+                    res.status(400).json({ success: false, message:'Error processing request '+ err }); 
+                } 
+                res.status(201).json({
+                    success: true, 
+                    data: result
+                });
+                //set in redis
+                rediscli.set(keyredis,JSON.stringify(result), function(error) {
+                    if (error) { throw error; }
+                });                    
+            });
+        }    
     });
 }
