@@ -221,6 +221,129 @@ exports.labelaggreport = function(req, res, next){
       })
 }
 
+exports.pendinglabelaggreport = function(req, res, next){
+    const username = req.body.username || req.query.username;
+    const name = req.body.name || req.query.name;
+    const status = 'STSPEND';
+    const verified_email = 'Y';
+    const usertype = 'LBL';
+    const msconfiggrp = 'STATUS';
+    const msconfigsts = 'STSACT';
+    var totalcount;
+
+    let limit = parseInt(req.query.limit);
+    let page = parseInt(req.body.page || req.query.page);
+    let sortby = req.body.sortby || req.query.sortby;
+    let query = {};
+
+    if(!limit || limit < 1) {
+	    limit = 10;
+    }
+
+    if(!page || page < 1) {
+	    page = 1;
+    }
+    
+    // returns all artists records for the label
+    //query = { labelid:labelid, artistname:artistname };
+    query = { username: new RegExp(username,'i'), 
+            name: new RegExp(name,'i'), 
+            usertype:usertype, 
+            "msconfigdetails.group": msconfiggrp, 
+            "msconfigdetails.status": msconfigsts, 
+            status: status, 
+            verified_email:verified_email};
+    
+    if(!sortby) {
+        var options = {
+            page: page,
+            limit: limit
+        }
+    } else {
+        var options = {
+            page: page,
+            limit: limit,
+            sortBy: sortby
+        }
+    }
+    var aggregate = User.aggregate();        
+    var olookup = {
+      from: 'msconfig',
+      localField: 'status',
+      foreignField: 'code',
+      as: 'msconfigdetails'
+    };
+    var ounwind = 'msconfigdetails';
+    var oproject = { 
+        _id:1,
+        username: 1,
+        name:1,
+        email:1,
+        contactno:1,
+        bankaccno:1,
+        bankname:1,
+        status:1,
+        "stsvalue": "$msconfigdetails.value",
+        verified_email:1,
+        verified_no:1,
+        lastlogin:1,
+        balance:1
+      };
+    aggregate.lookup(olookup).unwind(ounwind);
+    aggregate.match(query);  
+    aggregate.project(oproject);      
+    if(!sortby) {
+        var osort = { name: 1, username:1};
+        aggregate.sort(osort);
+    }
+    User.aggregatePaginate(aggregate, options, function(err, results, pageCount, count) {
+        if(err) 
+        {
+            res.status(400).json({
+                success: false, 
+                message: err.message
+            });
+        }
+        else
+        { 
+            res.status(201).json({
+                success: true, 
+                data: results,
+                npage: pageCount,
+                totalcount: count
+            });
+        }
+      })
+}
+
+exports.pendinglabelcount = function(req, res, next){
+    const username = req.body.username || req.query.username;
+    const name = req.body.name || req.query.name;
+    const status = req.body.status || req.query.status;
+    const verified_email = req.body.veremail || req.query.veremail;
+    const usertype = 'LBL';
+
+    let query = {};
+
+    
+    // returns all artists records for the label
+    //query = { labelid:labelid, artistname:artistname };
+    if (!status) {
+        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), verified_email:verified_email, usertype:usertype};
+    }else{
+        query = { username: new RegExp(username,'i'), name: new RegExp(name,'i'), verified_email:verified_email, usertype:usertype, status: status};
+    }
+    console.log(query);
+    User.count(query, function(err, count){
+        if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
+        
+        res.status(201).json({
+            success: true,
+            totalcount: count
+        }); 
+    });
+}
+
 exports.changelabelstatus = function(req, res, next){
     const labelid = req.params.id;
     const status = req.body.status;
@@ -299,7 +422,7 @@ exports.getlabellist = function(req, res, next){
 // --------------- SHARED USER FUNCTION !!!!! ------------------------------------------------------------------
 exports.authenticate = function(req, res, next){
     // check header or url parameters or post parameters for token
-	var token = req.body.token || req.query.token || req.headers['authorization'];
+	var token = req.headers['authorization'];
     //console.log(token);
 	if (token) {
 		jwt.verify(token, config.secret, function(err, decoded) {			

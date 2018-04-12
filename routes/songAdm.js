@@ -146,7 +146,7 @@ exports.songaggregateAdm = function(req, res, next){
     // returns songs records based on query
     query = { songname: new RegExp(songname,'i'),
         "albumdetails.albumyear": new RegExp(albumyear,'i'),
-        songpublish: new RegExp(songpublish,'i')
+        //songpublish: new RegExp(songpublish,'i')
     };
     if (labelid) {
         query = merge(query, {labelid:labelid});
@@ -159,6 +159,9 @@ exports.songaggregateAdm = function(req, res, next){
     }
     if (songgenre) {
         query = merge(query, {songgenre:songgenre});
+    }    
+    if (songpublish) {
+        query = merge(query, {songpublish:songpublish});
     }    
     if (songbuy) {
         if (songbuy == 'Y') {
@@ -233,9 +236,9 @@ exports.songaggregateAdm = function(req, res, next){
     };
 
     aggregate.lookup(olookup1).unwind(ounwind1);  
+    aggregate.lookup(olookup).unwind(ounwind);
     aggregate.match(query);
     aggregate.lookup(olookuplb).unwind(ounwindlb);    
-    aggregate.lookup(olookup).unwind(ounwind);
     
     aggregate.project(oproject);      
     if(!sortby) {
@@ -261,6 +264,180 @@ exports.songaggregateAdm = function(req, res, next){
         }
       })
   
+}
+
+exports.songaggnonpublish = function(req, res, next){
+    const labelid =  req.body.labelid || req.query.labelid; 
+    const artistname = req.body.artistname || req.query.artistname;
+    const albumname = req.body.albumname || req.query.albumname;
+    const songname = req.body.songname || req.query.songname;
+    const albumyear = req.body.albumyear || req.query.albumyear;
+    const songgenre = req.body.songgenre || req.query.songgenre;
+    const songpublish = 'N';
+    const songbuy = req.body.songbuy || req.query.songbuy;  
+    const status = req.body.status || req.query.status;
+    var totalcount;
+  
+    let limit = parseInt(req.query.limit);
+    let page = parseInt(req.body.page || req.query.page);
+    let sortby = req.body.sortby || req.query.sortby;
+    let query = {};
+    //let qmatch = {};
+  
+    if(!limit || limit < 1) {
+      limit = 10;
+    }
+  
+    if(!page || page < 1) {
+      page = 1;
+    }
+  
+  /*   if(!sortby) {
+      sortby = 'songname';
+    } */
+  
+  
+    // returns songs records based on query
+    query = { songname: new RegExp(songname,'i'),
+        "albumdetails.albumyear": new RegExp(albumyear,'i'),
+        songpublish: songpublish
+    };
+    if (labelid) {
+        query = merge(query, {labelid:labelid});
+    }
+    if (artistname) {
+        query = merge(query, {"artistdetails.artistname": new RegExp(artistname,'i')});
+    }
+    if (albumname) {
+        query = merge(query, {"albumdetails.albumname": new RegExp(albumname,'i')});
+    }
+    if (songgenre) {
+        query = merge(query, {songgenre:songgenre});
+    }    
+    if (songbuy) {
+        if (songbuy == 'Y') {
+        query = merge(query, {songbuy: { $gt: 0 }});
+        } else {
+        query = merge(query, {songbuy: { $lte: 0 }});
+        }
+    }  
+    if (status) {
+        query = merge(query, {status:status});
+    }
+    if(!sortby) {
+        var options = {
+            page: page,
+            limit: limit
+        }
+    }
+    else {
+        var options = {
+            page: page,
+            limit: limit,
+            sortBy: sortby
+        }
+    }
+
+    var aggregate = Song.aggregate();  
+    var olookuplb = {
+        from: 'user',
+        localField: 'objlabelid',
+        foreignField: '_id',
+        as: 'labeldetails'
+    };      
+    var olookup = {
+        from: 'artist',
+        localField: 'objartistid',
+        foreignField: '_id',
+        as: 'artistdetails'
+    };
+    var olookup1 = {
+        from: 'album',
+        localField: 'objalbumid',
+        foreignField: '_id',
+        as: 'albumdetails'
+    };
+    var ounwind = 'artistdetails';
+    var ounwind1 = 'albumdetails';
+    var ounwindlb = 'labeldetails';
+
+    var oproject = { 
+        _id:1,
+        labelid:1,
+        artistid:1,
+        albumid:1,
+        songname: 1,
+        songgenre:1,
+        songlyric:1,
+        songprice:1,
+        "label": "$labeldetails.name",
+        "artist": "$artistdetails.artistname",
+        "album": "$albumdetails.albumname",
+        "albumyear": "$albumdetails.albumyear",
+        objartistid:1,
+        objalbumid:1,
+        objlabelid:1,
+        songpublish:1,
+        songbuy:1,
+        status:1,
+        songprvwpath:1,
+        songprvwname:1,    
+        songfilepath:1,
+        songfilename:1,
+    };
+
+    aggregate.lookup(olookup1).unwind(ounwind1);  
+    aggregate.lookup(olookup).unwind(ounwind);
+    aggregate.match(query);
+    aggregate.lookup(olookuplb).unwind(ounwindlb);    
+    
+    aggregate.project(oproject);      
+    if(!sortby) {
+        var osort = { artistid: 1, albumid:1, songname:1};
+        aggregate.sort(osort);
+    }
+    Song.aggregatePaginate(aggregate, options, function(err, results, pageCount, count) {
+        if(err) 
+        {
+            res.status(400).json({
+                success: false, 
+                message: err.message
+            });
+        }
+        else
+        { 
+            res.status(201).json({
+                success: true, 
+                data: results,
+                npage: pageCount,
+                totalcount: count
+            });
+        }
+    })
+
+}
+
+exports.pendingsongcount = function(req, res, next){
+    const songpublish = req.body.songpublish || req.query.songpublish;
+    const status = req.body.status || req.query.status;
+
+    let query = {};
+    // returns song records based on query
+    if (songpublish) {
+        query = merge(query, {songpublish:songpublish});
+    }
+    if (status) {
+        query = merge(query, {status:status});
+    }
+
+    Song.count(query, function(err, count){
+        if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
+        
+        res.status(201).json({
+            success: true,
+            totalcount: count
+        }); 
+    });
 }
 
 exports.publishsong = function(req, res, next){

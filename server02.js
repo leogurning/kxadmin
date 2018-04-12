@@ -68,12 +68,16 @@ apiRoutes.post('/userlabelreport', user.labelaggreport); // API display list use
 apiRoutes.put('/changelabelstatus/:id', user.changelabelstatus); // API updates status user label
 apiRoutes.put('/changelabelbalance/:id', user.changelabelbalance); // API updates balance user label
 apiRoutes.get('/labellist', user.getlabellist); // API returns label list
+apiRoutes.post('/pendinglabelreport', user.pendinglabelaggreport); // API display list pending user label
+apiRoutes.post('/pendinglabelcount/:id', user.pendinglabelcount); // API display count pending user label
 
 apiRoutes.put('/cancelpublishsong/:id', songadm.cancelpublishsong); //API to cancel publishing song
 apiRoutes.put('/publishsong/:id', songadm.publishsong); //API to publish song
 apiRoutes.post('/songadm/aggreport', songadm.songaggregateAdm); //API to display list of song based on search criteria
 apiRoutes.get('/songadm/:id', songadm.getsong); // API get song details of the label
 apiRoutes.get('/songaggregate/:id', songadm.getsongaggregate); // API returns song details of given song id
+apiRoutes.post('/songadm/aggreportnonpublish', songadm.songaggnonpublish); //API to display list of pending song based on search criteria
+apiRoutes.post('/songadm/pendingsongcount/:id', songadm.pendingsongcount); //API to display count of pending song based on search criteria
 
 apiRoutes.post('/msconfig/:id', masterconfig.savemsconfig); //API to save/edit msconfig data
 apiRoutes.delete('/msconfig/:id', masterconfig.delmsconfig); //API to delete msconfig
