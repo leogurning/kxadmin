@@ -1,6 +1,7 @@
 const mongoose = require( 'mongoose' );
 const Song = require('../models/song');
 const config = require('../config');
+var rediscli = require('../redisconn');
 
 var ObjId = mongoose.Types.ObjectId;
 var merge = function() {
@@ -450,6 +451,8 @@ exports.publishsong = function(req, res, next){
             if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
                 
             if(song){
+                let labelid = song.labelid;
+                let albumid = song.albumid;
                 song.songpublish = 'Y';
                 song.save(function(err){
                   if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
@@ -457,6 +460,8 @@ exports.publishsong = function(req, res, next){
                       success: true,
                       message: 'Song has been published successfully'
                   });
+                  //Delete redis respective keys
+                  rediscli.del('redis-user-songlist-'+albumid+labelid);                
                 });
             }
         });
@@ -474,16 +479,20 @@ const songid = req.params.id;
                 
             if(song){
                 if (song.songbuy > 0) {
-                res.status(400).json({ success: false, message:'Published Song can not be canceled if the song has been sold. ' });
+                    res.status(400).json({ success: false, message:'Published Song can not be canceled if the song has been sold. ' });
                 } else {
-                song.songpublish = 'N';
-                song.save(function(err){
-                    if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
-                    res.status(201).json({
-                        success: true,
-                        message: 'Published Song has been canceled successfully'
+                    let labelid = song.labelid;
+                    let albumid = song.albumid;
+                    song.songpublish = 'N';
+                    song.save(function(err){
+                        if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
+                        res.status(201).json({
+                            success: true,
+                            message: 'Published Song has been canceled successfully'
+                        });
+                        //Delete redis respective keys
+                        rediscli.del('redis-user-songlist-'+albumid+labelid);                
                     });
-                });
                 }  
             }
         });
