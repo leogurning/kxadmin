@@ -461,7 +461,7 @@ exports.publishsong = function(req, res, next){
                       message: 'Song has been published successfully'
                   });
                   //Delete redis respective keys
-                  rediscli.del('redis-user-songlist-'+albumid+labelid);                
+                  rediscli.del('redis-topsongs','redis-recentsongs','redis-user-songlist-'+albumid+labelid);                
                 });
             }
         });
@@ -491,7 +491,7 @@ const songid = req.params.id;
                             message: 'Published Song has been canceled successfully'
                         });
                         //Delete redis respective keys
-                        rediscli.del('redis-user-songlist-'+albumid+labelid);                
+                        rediscli.del('redis-topsongs','redis-recentsongs','redis-user-songlist-'+albumid+labelid);                
                     });
                 }  
             }

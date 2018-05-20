@@ -55,7 +55,11 @@ exports.savemsconfig = function(req, res, next){
                         message: 'CONFIG updated successfully'
                     });
                     //Delete redis respective keys
-                    rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
+                    rediscli.del('redis-'+group+'-grp',
+                                 'redis-lis-'+group+'-grp', 
+                                 'redis-'+code+group,
+                                 'redis-lis-'+code+group,
+                                 'redis-'+group+'ROOT');
                 });
             });
 
@@ -85,7 +89,11 @@ exports.savemsconfig = function(req, res, next){
                     });
                 });
                 //Delete redis respective keys
-                rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
+                rediscli.del('redis-'+group+'-grp',
+                            'redis-lis-'+group+'-grp', 
+                            'redis-'+code+group,
+                            'redis-lis-'+code+group, 
+                            'redis-'+group+'ROOT');
         }
     }    
 }
@@ -101,7 +109,11 @@ exports.delmsconfig = function(req, res, next) {
             let code = msconfig.code;
             let group = msconfig.group;
             //Delete redis respective keys
-            rediscli.del('redis-'+group+'-grp', 'redis-'+code+group, 'redis-'+group+'ROOT');
+            rediscli.del('redis-'+group+'-grp', 
+                        'redis-lis-'+group+'-grp', 
+                        'redis-'+code+group, 
+                        'redis-lis-'+code+group, 
+                        'redis-'+group+'ROOT');
         }
         Msconfig.remove({_id: msconfigid}, function(err){
             if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
@@ -194,7 +206,7 @@ exports.updatemsconfigfile = function(req, res, next){
             let code = msconfig.code;
             let group = msconfig.group;
             //Delete redis respective keys
-            rediscli.del('redis-'+code+group);                
+            rediscli.del('redis-'+code+group,'redis-lis-'+code+group);                
 		}
 		msconfig.save(function(err){
 			if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }
