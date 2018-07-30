@@ -478,9 +478,9 @@ const songid = req.params.id;
             if(err){ res.status(400).json({ success: false, message: 'Error processing request '+ err }); }
                 
             if(song){
-                if (song.songbuy > 0) {
+                /* if (song.songbuy > 0) {
                     res.status(400).json({ success: false, message:'Published Song can not be canceled if the song has been sold. ' });
-                } else {
+                } else { */
                     let labelid = song.labelid;
                     let albumid = song.albumid;
                     song.songpublish = 'N';
@@ -493,7 +493,7 @@ const songid = req.params.id;
                         //Delete redis respective keys
                         rediscli.del('redis-topsongs','redis-recentsongs','redis-user-songlist-'+albumid+labelid);                
                     });
-                }  
+                //}  
             }
         });
     }

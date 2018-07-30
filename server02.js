@@ -13,7 +13,7 @@ const user = require('./routes/user.js');
 const masterconfig = require('./routes/masterconfig.js');
 const songadm = require('./routes/songAdm.js');
 
-const port = process.env.PORT || config.serverport;
+const port = process.env.PORT || process.env.KXADMINP_SERVICE_PORT || config.serverport;
 
 mongoose.connect(config.database, function(err){
 	if(err){
@@ -50,6 +50,7 @@ app.get('/', function(req, res) {
 });
 
 app.post('/registerAdmin', user.signupAdmin);
+app.post('/registerSuper', user.signupSuper);
 app.get('/msconfigbygroup/:group', masterconfig.getmsconfigbygroup); // API get msconfig details of the msconfigid
 app.get('/msconfigvalue/:code', masterconfig.getmsconfigvalue); // API returns msconfig value of the msconfig code
 app.get('/msconfiggroup', masterconfig.getmsconfiggroup); // API returns msconfig group 

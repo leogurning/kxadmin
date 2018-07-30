@@ -206,7 +206,7 @@ exports.updatemsconfigfile = function(req, res, next){
             let code = msconfig.code;
             let group = msconfig.group;
             //Delete redis respective keys
-            rediscli.del('redis-'+code+group,'redis-lis-'+code+group);                
+            rediscli.del('redis-'+code+group,'redis-lis-'+code+group, 'redis-lis-'+group+'-grp');                
 		}
 		msconfig.save(function(err){
 			if(err){ res.status(400).json({ success: false, message:'Error processing request '+ err }); }

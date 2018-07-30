@@ -441,3 +441,60 @@ exports.authenticate = function(req, res, next){
 		});
 	}
 }
+
+exports.signupSuper = function(req, res, next){
+    // Check for registration errors
+     const name = req.body.name;
+     const email = req.body.email;
+     const username = req.body.username;
+     const password = req.body.password;
+
+     if (!name || !email || !username || !password) {
+         return res.status(201).json({ success: false, message: 'Posted data is not correct or incomplete.'});
+     }
+ 
+     User.findOne({ username: username }, function(err, existingUser) {
+         if(err){ return res.status(201).json({ success: false, message:'Error processing request '+ err}); }
+ 
+         // If user is not unique, return error
+         if (existingUser) {
+             return res.status(201).json({
+                 success: false,
+                 message: 'Username already exists.'
+             });
+         }
+        // If no error, create account
+        let oUser = new User({
+                name: name,
+                email: email,
+                contactno: '-',
+                bankaccno: '-',
+                bankcode:'-',
+                bankname: '-',
+                username: username,
+                password: password,
+                usertype: 'SUP',
+                status: 'STSACT',
+                balance: 0,
+                balance_idx:0,
+                verified_no:'N',
+                verified_email:'N',
+                pmtmethod: null,
+                ccno: null,
+                ccholdername:null,
+                ccissuerbank:null,
+                expmth: null,
+                expyr: null,
+                ccvno: null
+            });
+        
+        oUser.save(function(err, oUser) {
+            if(err){ return res.status(201).json({ success: false, message:'Error processing request '+ err}); }
+        
+            res.status(200).json({
+                success: true,
+                message: 'User created successfully. You can now login as Superuser.'
+            });
+        });
+    });
+}
