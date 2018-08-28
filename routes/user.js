@@ -9,6 +9,7 @@ exports.signupAdmin = function(req, res, next){
      const email = req.body.email;
      const username = req.body.username;
      const password = req.body.password;
+     const usertype = req.body.usertype;
 
      if (!name || !email || !username || !password) {
          return res.status(201).json({ success: false, message: 'Posted data is not correct or incomplete.'});
@@ -34,7 +35,7 @@ exports.signupAdmin = function(req, res, next){
                 bankname: '-',
                 username: username,
                 password: password,
-                usertype: 'ADM',
+                usertype: usertype,
                 status: 'STSACT',
                 balance: 0,
                 balance_idx:0,

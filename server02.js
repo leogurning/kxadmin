@@ -12,6 +12,8 @@ const user = require('./routes/user.js');
 
 const masterconfig = require('./routes/masterconfig.js');
 const songadm = require('./routes/songAdm.js');
+const trfbalance = require('./routes/trfbalance.js');
+const adjustment = require('./routes/adjustment.js');
 
 const port = process.env.PORT || process.env.KXADMINP_SERVICE_PORT || config.serverport;
 
@@ -86,6 +88,19 @@ apiRoutes.put('/msconfig/:id', masterconfig.updatemsconfigfile); //API to update
 apiRoutes.post('/mscfgaggreport', masterconfig.msconfigaggregate); //API to display list of msconfig based on search criteria
 apiRoutes.get('/msconfig/:id', masterconfig.getmsconfig); // API get msconfig details of the msconfigid
 apiRoutes.get('/msconfigagg/:id', masterconfig.getmsconfigaggregate); // API get msconfig details of the msconfigid
+
+apiRoutes.post('/pendingtrfbalancereq/:id', trfbalance.pendingtrfbalancereqagg); //API to display list of transfer balance req based on search criteria
+apiRoutes.put('/updatestatustrfbalancereq/:id', trfbalance.updatestatustrfbalance); //API to update data of transfer balance req based on search criteria
+apiRoutes.get('/gettrfbalancereqagg/:id', trfbalance.gettrfbalancereqagg); //API to get details of transfer balance req based on search criteria
+apiRoutes.post('/completetrfbalancereq/:id', trfbalance.completetrfbalance); //API to complete the transfer balance req based on search criteria
+apiRoutes.post('/trfbalancereqagg/:id', trfbalance.trfbalancereqagg); //API to display list of transfer balance req based on search criteria
+apiRoutes.put('/editposttrfbalancereq/:id', trfbalance.editposttrfbalance); //API to edit data of transfer balance req based on search criteria
+
+apiRoutes.post('/saveadjustment/:id', adjustment.saveadjustment); //API to save data of adjustment
+apiRoutes.post('/adjustmentagg/:id', adjustment.adjustmentagg); //API to display list data of adjustment
+apiRoutes.get('/getadjustmentagg/:id', adjustment.getadjustmentagg); //API to display details of adjustment
+apiRoutes.put('/editadjustment/:id', adjustment.editadjustment); //API to edit details of adjustment
+apiRoutes.post('/updatestatusadjustment/:id', adjustment.updatestatusadjustment); //API to update status of adjustment
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
